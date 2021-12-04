@@ -1,2 +1,3 @@
 matplotlib
 fastf1
+seaborn
