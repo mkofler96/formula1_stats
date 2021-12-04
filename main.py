@@ -10,3 +10,4 @@ import matplotlib as mtpltlib
 from backend import *
 
 setup()
+st.write("setup done")
