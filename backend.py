@@ -3,6 +3,10 @@ import fastf1 as ff1
 import os
 import pandas as pd
 from fastf1.core import Laps
+import requests
+import xmltodict
+from datetime import datetime
+from datetime import timedelta
 
 def setup():
     ff1.Cache.enable_cache(os.getcwd())
@@ -47,7 +51,7 @@ def load_laps(year, circuit, fp1, fp2, fp3):
 def create_heat_map(laps, drivers):
     list_driver_laps = list()
     for drv in drivers:
-        drvs_laps = laps.pick_driver(drv).reset_index()
+        drvs_laps = laps.pick_driver(drv).pick_quicklaps().reset_index()
         float_laptime = drvs_laps["LapTime"].apply(lambda x: float_tdelta(x))
         list_driver_laps.append(float_laptime)
     heatmap = pd.concat(list_driver_laps, axis=1)
@@ -63,6 +67,31 @@ def float_tdelta(tdelta):
     return time
 
 
+def get_current_weekends():
+    url = "http://ergast.com/api/f1/current"
+    weekends = xmltodict.parse(requests.get(url).content)
+    print(type(weekends))
+    current_season = weekends["MRData"]["RaceTable"]["@season"]
+    #print(weekends["MRData"]["RaceTable"]["Race"])
+    races_left = list()
+    races = list()
+    rounds = list()
+    next_race_w_name = list()
+    for race in weekends["MRData"]["RaceTable"]["Race"]:
+        print("Round: " + race["@round"] + race["RaceName"] + " at circuit: " + race["Circuit"]["@circuitId"] + " on " + race["Date"])
+        delta_to_now = datetime.strptime(race["Date"], '%Y-%m-%d') - datetime.today() + timedelta(days=1)
+        if delta_to_now > timedelta(days=0):
+            races_left.append(race["Circuit"]["@circuitId"])
+            next_race_w_name.append(race["RaceName"])
+        rounds.append(race["@round"])
+        races.append(race["RaceName"])
+    print("next Grand Prix: ")
+    print(races_left[0])
+    season = weekends["MRData"]["RaceTable"]["Race"][0]["@season"]
+    race_names = races
+    next_race = races_left[0]
+    # todo: next_race could be dict containing name and short
+    return season, race_names, next_race, next_race_w_name[0]
 
 def rest():
     laps = monza_quali.load_laps(with_telemetry=True)
