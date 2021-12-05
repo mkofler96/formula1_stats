@@ -58,6 +58,7 @@ def create_heat_map(laps, drivers):
     heatmap.columns = drivers
     return heatmap
 
+
 def float_tdelta(tdelta):
     try:
         cmp = tdelta.components
